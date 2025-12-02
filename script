@@ -1,0 +1,34 @@
+#!/bin/bash
+readonly LIMIT=20
+
+min_size="$1"
+max_size="$2"
+target_dir="$3"
+count=0
+
+echo "=== FILES ==="
+
+for filepath in $(find "$target_dir" -type f \
+    -size "+${min_size}c" \
+    -size "-${max_size}c" \
+    -print 2>/dev/null); do
+
+    if [ "$count" -ge "$LIMIT" ]; then  
+        break
+    fi
+
+    filename=$(basename "$filepath")
+    size=$(stat -c %s "$filepath" 2>/dev/null)
+
+    echo "Full path: $filepath"
+    echo "File name: $filename"
+    echo "Size: $size bytes"  
+    echo "--- --- ---"
+    ((count++))
+done 
+
+if [ "$count" -eq 0 ]; then  
+    echo "No files found"
+else
+    echo "Found: $count files"
+fi
