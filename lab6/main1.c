@@ -57,27 +57,18 @@ void find_file(const char *dir_path, const char *target_file, struct Statistics 
                 stats->found_count++;
                 
                 printf("\n========================================\n");
-                printf("Найден файл: %s\n", entry->d_name);
-                printf("Полный путь: %s\n", full_path);
-                printf("Размер: %ld байт\n", stat_buf.st_size);
-                printf("Дата создания: ");
+                printf("Found file: %s\n", entry->d_name);
+                printf("Full path: %s\n", full_path);
+                printf("Size: %ld bytes\n", stat_buf.st_size);
+                printf("Date: ");
                 print_time(stat_buf.st_ctime);
                 printf("\n");
-                printf("Права доступа: ");
+                printf("Right: ");
                 print_permissions(stat_buf.st_mode);
                 printf(" (%04o)\n", stat_buf.st_mode & 0777);
-                printf("Номер индексного дескриптора: %ld\n", stat_buf.st_ino);
-                printf("Тип файла: ");
-                if (S_ISREG(stat_buf.st_mode)) printf("Обычный файл\n");
-                if (S_ISLNK(stat_buf.st_mode)) printf("Символическая ссылка\n");
-                printf("Владелец: UID=%d, GID=%d\n", stat_buf.st_uid, stat_buf.st_gid);
-                printf("Дата последнего доступа: ");
-                print_time(stat_buf.st_atime);
+                printf("Index descriptor: %ld\n", stat_buf.st_ino);
                 printf("\n");
-                printf("Дата последней модификации: ");
-                print_time(stat_buf.st_mtime);
                 printf("\n");
-                printf("Количество жестких ссылок: %ld\n", stat_buf.st_nlink);
                 printf("========================================\n");
             }
         }
@@ -89,16 +80,14 @@ void find_file(const char *dir_path, const char *target_file, struct Statistics 
 int main(int argc, char *argv[]) {
     struct Statistics stats = {0, 0, 0};
     
-    printf("Поиск файла '%s' в каталоге '%s'...\n", argv[2], argv[1]);
-    printf("================================================================\n");
+    //find_file(argv[1], argv[2], &stats);
+    find_file("/home/ilkoon/work/lab6", "file.txt",&stats);
 
-    find_file(argv[1], argv[2], &stats);
-
-    printf("\n\nИТОГИ ПОИСКА:\n");
+    printf("\n\nRESULTS\n");
     printf("================================================================\n");
-    printf("Найдено файлов с именем '%s': %d\n", argv[2], stats.found_count);
-    printf("Просмотрено каталогов: %lu\n", stats.dir_count);
-    printf("Просмотрено файлов: %lu\n", stats.file_count);
+    printf("Found files: '%s': %d\n", argv[2], stats.found_count);
+    printf("Directories: %lu\n", stats.dir_count);
+    printf("Files: %lu\n", stats.file_count);
     printf("================================================================\n");
 
     return 0;
