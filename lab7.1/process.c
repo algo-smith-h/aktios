@@ -1,4 +1,4 @@
-//process
+//process || gcc process.c -0 proces -lreadline
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +11,6 @@
 #define MAX_ARGS 64
 #define MAX_PATH_LEN 1024
 
-// Разбиение строки на аргументы
 char** parse_command(char* line, int* arg_count) {
     char** args = malloc(MAX_ARGS * sizeof(char*));
     if (!args) return NULL;
@@ -28,7 +27,6 @@ char** parse_command(char* line, int* arg_count) {
     return args;
 }
 
-// Освобождение памяти аргументов
 void free_args(char** args, int count) {
     for (int i = 0; i < count; i++) {
         free(args[i]);
@@ -36,17 +34,16 @@ void free_args(char** args, int count) {
     free(args);
 }
 
-// Встроенные команды shell
 int execute_builtin(char** args, int arg_count) {
     if (arg_count == 0) return 0;
     
     if (strcmp(args[0], "exit") == 0) {
-        printf("Выход из интерпретатора команд\n");
+        printf("EXIT.\n");
         exit(0);
     }
     else if (strcmp(args[0], "cd") == 0) {
         if (arg_count < 2) {
-            fprintf(stderr, "cd: ожидается аргумент\n");
+            fprintf(stderr, "cd: need argument\n");
         } else if (chdir(args[1]) != 0) {
             perror("cd");
         }
@@ -62,90 +59,76 @@ int execute_builtin(char** args, int arg_count) {
         return 1;
     }
     else if (strcmp(args[0], "help") == 0) {
-        printf("=== Интерпретатор команд ===\n");
-        printf("Встроенные команды:\n");
-        printf("  cd <dir>    - сменить директорию\n");
-        printf("  pwd         - текущая директория\n");
-        printf("  help        - эта справка\n");
-        printf("  exit        - выход\n");
-        printf("Любая другая команда будет выполнена через exec()\n");
-        printf("Примеры: ls -la, ps aux, echo 'Hello'\n");
+        printf("=== Interpreter ===\n");
+        printf("Built-in commands:\n");
+        printf("  cd <dir>    - change directory\n");
+        printf("  pwd         - print working directory\n");
+        printf("  help        - show this help\n");
+        printf("  exit        - exit\n");
         return 1;
     }
     
-    return 0; // Не встроенная команда
+    return 0; 
 }
 
-// Выполнение внешней команды
 void execute_external(char** args, int arg_count) {
     pid_t pid = fork();
     
     if (pid < 0) {
-        perror("Ошибка при создании процесса");
+        perror("Error: can`t make process");
         return;
     }
     
-    if (pid == 0) { // Дочерний процесс
-        // Пробуем выполнить команду
+    if (pid == 0) {
         execvp(args[0], args);
-        
-        // Если execvp вернул управление - ошибка
         perror(args[0]);
         exit(EXIT_FAILURE);
     } 
-    else { // Родительский процесс
+    else { 
         int status;
         waitpid(pid, &status, 0);
         
         if (WIFEXITED(status)) {
-            printf("Команда завершилась с кодом %d\n", WEXITSTATUS(status));
+            printf("Command code: %d\n", WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
-            printf("Команда завершена сигналом %d\n", WTERMSIG(status));
+            printf("Command signal: %d\n", WTERMSIG(status));
         }
     }
 }
 
 int main() {
-    printf("=== Интерпретатор команд (версия с процессами) ===\n");
-    printf("Введите 'help' для справки, 'exit' для выхода\n");
+    printf("=== Interpreter (version with process) ===\n");
+    printf("Type 'exit' - to end program or 'help' - to get help notes\n");
     
     char* line;
     
-    // Настройка readline
     using_history();
-    stifle_history(100); // Ограничиваем историю
+    stifle_history(100); 
     
     while (1) {
-        // Чтение строки с поддержкой истории
-        line = readline("myshell> ");
+        line = readline("cs> ");
         
         if (!line) {
             printf("\n");
             break;
         }
         
-        // Пропускаем пустые строки
         if (strlen(line) == 0) {
             free(line);
             continue;
         }
         
-        // Добавляем в историю
         add_history(line);
         
-        // Разбор команды
         int arg_count;
         char** args = parse_command(line, &arg_count);
         
         if (arg_count > 0) {
-            // Проверяем встроенные команды
             if (!execute_builtin(args, arg_count)) {
-                // Выполняем внешнюю команду
                 execute_external(args, arg_count);
             }
         }
         
-        // Очистка
         free_args(args, arg_count);
         free(line);
     }
